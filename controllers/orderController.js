@@ -16,36 +16,94 @@ const razorpayInstance = new razorpay({
 })
 
 // Placing orders using COD Method
-const placeOrder = async (req,res) => {
-    
+const placeOrder = async (req, res) => {
     try {
-        
-        const { userId, items, amount, address} = req.body;
+        const { userId, items, amount, address } = req.body;
 
         const orderData = {
             userId,
             items,
             address,
             amount,
-            paymentMethod:"COD",
-            payment:false,
+            paymentMethod: "COD",
+            payment: false,
             date: Date.now()
-        }
+        };
 
-        const newOrder = new orderModel(orderData)
-        await newOrder.save()
+        const newOrder = new orderModel(orderData);
+        await newOrder.save();
 
-        await userModel.findByIdAndUpdate(userId,{cartData:{}})
+        await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
-        res.json({success:true,message:"Order Placed"})
+        // Send email with order details
+        sendEmail(res, userId, items, amount, address);
 
-
+        res.json({ success: true, message: "Order Placed" });
     } catch (error) {
-        console.log(error)
-        res.json({success:false,message:error.message})
+        console.log(error);
+        res.json({ success: false, message: error.message });
     }
+};
 
-}
+const sendEmail = (res, userId, items, amount, address) => {
+    const mailOptions = {
+        from: 'emqarani@gmail.com',
+        to: 'emqarani1@gmail.com', // Admin email
+        subject: 'New Order Notification',
+        text: `
+            A new order has been placed!
+
+            Order Details:
+            ---------------------
+            User ID: ${userId}
+            Items: ${items.join(', ')}
+            Amount: ${amount}
+            Delivery Address: ${address}
+            Payment Method: COD
+            ---------------------
+            Thank you for your attention.
+        `,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return res.status(500).send('Error sending email');
+        }
+        console.log('Email sent: ' + info.response);
+        res.send('Order notification sent to admin');
+    });
+};
+
+
+
+
+
+// Set up your email transport
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // Use your email service
+    auth: {
+        user: 'emqarani@gmail.com', // Your email
+        pass: 'zdtb juhe ivnt rhmm', // Your email password
+    },
+});
+
+// Endpoint to log visits
+app.get('/notify', (req, res) => {
+  
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return res.status(500).send('Error sending email');
+        }
+        console.log('Email sent: ' + info.response);
+        res.send('Visitor logged');
+    });
+});
+
+
+
+
+
 
 // Placing orders using Stripe Method
 const placeOrderStripe = async (req,res) => {
