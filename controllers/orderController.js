@@ -52,7 +52,6 @@ const sendEmail = (res, userId, items, amount, address) => {
         subject: 'New Order Notification',
         text: `
             A new order has been placed!
-
             Order Details:
             ---------------------
             User ID: ${userId}
